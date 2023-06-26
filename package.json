@@ -7,15 +7,19 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "gen-types": "typechain --target ethers-v5 --out-dir src/utils/typechain-types 'src/utils/ABIs/*.json'",
     "postinstall": "sed -i.bak '/module/d' node_modules/@ethersproject/contracts/package.json"
   },
   "dependencies": {
     "@account-abstraction/contracts": "^0.6.0",
     "@account-abstraction/sdk": "^0.6.0",
+    "@peculiar/asn1-ecc": "^2.3.6",
+    "@peculiar/asn1-schema": "^2.3.6",
     "@types/node": "20.3.1",
     "@types/react": "18.2.12",
     "@types/react-dom": "18.2.5",
     "autoprefixer": "10.4.14",
+    "elliptic": "^6.5.4",
     "eslint": "8.42.0",
     "eslint-config-next": "13.4.5",
     "ethers": "5.7.2",
@@ -25,6 +29,14 @@
     "react-dom": "18.2.0",
     "tailwindcss": "3.3.2",
     "typescript": "5.1.3",
+    "uuid": "^9.0.0",
     "zustand": "^4.3.8"
+  },
+  "devDependencies": {
+    "@simplewebauthn/typescript-types": "^7.0.0",
+    "@typechain/ethers-v5": "^11.0.0",
+    "@types/elliptic": "^6.4.14",
+    "@types/uuid": "^9.0.2",
+    "typechain": "^8.2.0"
   }
 }
