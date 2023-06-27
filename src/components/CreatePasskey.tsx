@@ -3,8 +3,11 @@ import { useEffect, useState } from "react";
 
 import { createCredential } from "@/utils/webauthn";
 import { getPublicKey } from "@/utils/getPublicKey";
+import { useStore } from "@/store";
 
 const CreatePasskey = () => {
+  const { setPublicKey, setCredentialId } = useStore();
+
   const [isComptabible, setIsComptabible] = useState(false);
 
   useEffect(() => {
@@ -45,8 +48,8 @@ const CreatePasskey = () => {
       return;
     }
 
-    localStorage.setItem("public_key", JSON.stringify(pubKey));
-    localStorage.setItem("credential_id", credential.id);
+    setPublicKey(pubKey);
+    setCredentialId(credential.id);
     console.log("Created");
   };
 

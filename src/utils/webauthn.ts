@@ -10,11 +10,9 @@ export const createCredential =
     const textEncoder = new TextEncoder();
     const challenge = textEncoder.encode(challengeUuid).buffer;
     const userId = textEncoder.encode(userUuid).buffer;
-    console.log(challenge);
-    console.log(userId);
 
-    localStorage.setItem("challenge_uuid", challengeUuid);
-    localStorage.setItem("user_uuid", userUuid);
+    // localStorage.setItem("challenge_uuid", challengeUuid);
+    // localStorage.setItem("user_uuid", userUuid);
 
     const publicKeyCredentialCreationOptions: PublicKeyCredentialCreationOptions =
       {
@@ -46,14 +44,9 @@ export const createCredential =
   };
 
 export const getCredential = async (
-  credentialId: BufferSource
+  credentialId: BufferSource,
+  challenge: string
 ): Promise<Credential | null> => {
-  const challenge = localStorage.getItem("challenge_uuid");
-  if (!challenge) {
-    console.log("No challenge in local storage");
-
-    return null;
-  }
   const textEncoder = new TextEncoder();
 
   const publicKeyCredentialRequestOptions: PublicKeyCredentialRequestOptions = {

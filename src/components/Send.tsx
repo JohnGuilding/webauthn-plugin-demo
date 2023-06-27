@@ -8,16 +8,11 @@ import {
   bundlerUrl,
   chainId,
   entryPointAddress,
+  passkeyAccountFactoryAddress,
 } from "@/constants";
 import { useStore } from "@/store";
 import parseExpectedGas from "@/utils/parseExpectedGas";
 import { PasskeyAccountFactory__factory } from "@/utils/typechain-types/factories/PasskeyAccountFactory__factory";
-
-interface SendProps {
-  publicKey: Array<string>;
-  signature: Array<string>;
-  publicKeyCredential: any;
-}
 
 type Context = {
   signature: Array<string>;
@@ -25,18 +20,26 @@ type Context = {
   authDataBuffer: string;
 };
 
-const Send = ({ publicKey, signature, publicKeyCredential }: SendProps) => {
-  const { provider, signer } = useStore();
+const Send = () => {
+  const { provider, signer, publicKey, signature, publicKeyCredential } =
+    useStore();
+
+  async function isDeployed(addr: string): Promise<boolean> {
+    return await provider.getCode(addr).then((code) => code !== "0x");
+  }
 
   const sendUserOperation = async () => {
     const recipient = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"; // HH account 1
 
-    const detDeployer = new DeterministicDeployer(provider);
-    const PasskeyAccountFactory = await detDeployer.deterministicDeploy(
-      new PasskeyAccountFactory__factory(),
-      0,
-      [entryPointAddress]
-    );
+    const isFactoryDeployed = await isDeployed(passkeyAccountFactoryAddress);
+    if (!isFactoryDeployed) {
+      const detDeployer = new DeterministicDeployer(provider);
+      await detDeployer.deterministicDeploy(
+        new PasskeyAccountFactory__factory(),
+        0,
+        [entryPointAddress]
+      );
+    }
 
     const q_values = {
       q0: publicKey[0],
@@ -46,26 +49,27 @@ const Send = ({ publicKey, signature, publicKeyCredential }: SendProps) => {
     const passkeyAccountAPI = new PasskeyAccountAPI({
       provider,
       entryPointAddress,
-      factoryAddress: PasskeyAccountFactory,
+      factoryAddress: passkeyAccountFactoryAddress,
       owner: signer,
       ec: Secp256r1VerifierAddress,
       q: q_values,
     });
 
-    const counterFactualAddress =
-      await passkeyAccountAPI.getCounterFactualAddress();
+    if (await passkeyAccountAPI.checkAccountPhantom()) {
+      const counterFactualAddress =
+        await passkeyAccountAPI.getCounterFactualAddress();
 
-    const amountToTransfer = ethers.utils.parseEther("1");
-    const balance = await provider.getBalance(counterFactualAddress);
-    const recipientBalanceBefore = await provider.getBalance(recipient);
-
-    if (balance.lt(amountToTransfer)) {
       const fundAccount = await signer.sendTransaction({
         to: counterFactualAddress,
         value: ethers.utils.parseEther("100"),
       });
       await fundAccount.wait();
     }
+
+    const passkeyAccountAddress = await passkeyAccountAPI.getAccountAddress();
+    const amountToTransfer = ethers.utils.parseEther("1");
+    const balance = await provider.getBalance(passkeyAccountAddress);
+    const recipientBalanceBefore = await provider.getBalance(recipient);
 
     const bundlerProvider = new HttpRpcClient(
       bundlerUrl,
@@ -107,7 +111,7 @@ const Send = ({ publicKey, signature, publicKeyCredential }: SendProps) => {
       throw parseExpectedGas(e);
     }
 
-    const newBalance = await provider.getBalance(counterFactualAddress);
+    const newBalance = await provider.getBalance(passkeyAccountAddress);
 
     console.log(
       "Smart Account balance before:",

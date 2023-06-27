@@ -13,7 +13,7 @@ export enum COSEKEYS {
   e = -2,
 }
 
-export const getPublicKey = (attestationObject: ArrayBuffer) => {
+export const getPublicKey = (attestationObject: ArrayBuffer): Array<string> => {
   const authData = decode(attestationObject, undefined, undefined)
     .authData as Uint8Array;
 
