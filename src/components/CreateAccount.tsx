@@ -3,11 +3,12 @@ import { useEffect, useState } from "react";
 
 import { createCredential } from "@/utils/webauthn";
 import { getPublicKey } from "@/utils/getPublicKey";
-import { useStore } from "@/store";
 
-const CreatePasskey = () => {
-  const { setPublicKey, setCredentialId } = useStore();
+interface CreateAccountProps {
+  setAccountCreated: (accountCreated: boolean) => void;
+}
 
+const CreateAccount = ({ setAccountCreated }: CreateAccountProps) => {
   const [isComptabible, setIsComptabible] = useState(false);
 
   useEffect(() => {
@@ -27,6 +28,7 @@ const CreatePasskey = () => {
     }
 
     setIsComptabible(false);
+    // Show toast message
   };
 
   const createPasskey = async () => {
@@ -48,21 +50,23 @@ const CreatePasskey = () => {
       return;
     }
 
-    setPublicKey(pubKey);
-    setCredentialId(credential.id);
+    // public key and randomly generated credential ID is sent to the server for storage
+    localStorage.setItem("credentialId", credential.id);
+    localStorage.setItem("publicKey", JSON.stringify(pubKey));
     console.log("Created");
+    setAccountCreated(true);
   };
 
   return (
-    <div className="flex flex-col mt-4">
-      <p>Create a passkey for signing ethereum transactions</p>
+    <div className="flex flex-col mt-4 p-4 backdrop-blur-md bg-white/10 rounded-xl">
+      <p>Create an account</p>
       {isComptabible ? (
         <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className="bg-emerald-400 hover:bg-emerald-500 text-white font-bold py-2 px-4 my-4 rounded-lg"
           type="button"
           onClick={createPasskey}
         >
-          Create Passkey
+          Create Account
         </button>
       ) : (
         <button
@@ -77,4 +81,4 @@ const CreatePasskey = () => {
   );
 };
 
-export default CreatePasskey;
+export default CreateAccount;

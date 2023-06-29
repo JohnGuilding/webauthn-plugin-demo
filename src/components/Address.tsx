@@ -1,9 +1,11 @@
 "use client";
-import { useStore } from "@/store";
 
-const Address = () => {
-  const { signer } = useStore();
-  return <div>Address: {signer.address}</div>;
+interface AddressProps {
+  address: string;
+}
+
+const Address = ({ address }: AddressProps) => {
+  return <p className="truncate">Address: {address}</p>;
 };
 
 export default Address;

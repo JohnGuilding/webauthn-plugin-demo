@@ -1,9 +1,14 @@
 "use client";
+
 import useBalance from "@/hooks/useBalance";
 
-const Balance = () => {
-  const balance = useBalance();
-  return <div>Balance: {balance}</div>;
+interface BalanceProps {
+  address: string;
+}
+
+const Balance = ({ address }: BalanceProps) => {
+  const balance = useBalance(address);
+  return <p>Balance: {balance} ETH</p>;
 };
 
 export default Balance;

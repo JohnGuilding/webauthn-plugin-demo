@@ -2,13 +2,17 @@ import { useState, useEffect } from "react";
 import { formatEther } from "ethers/lib/utils";
 import { useStore } from "@/store";
 
-const useBalance = () => {
-  const { signer } = useStore();
+const useBalance = (address: string) => {
+  const { provider } = useStore();
   const [balance, setBalance] = useState("");
 
   useEffect(() => {
     const getBalance = async () => {
-      const newBalance = await signer.getBalance();
+      if (!address) {
+        return;
+      }
+
+      const newBalance = await provider.getBalance(address);
       setBalance(formatEther(newBalance));
     };
 
@@ -21,7 +25,7 @@ const useBalance = () => {
     return () => {
       clearInterval(intervalId);
     };
-  }, [signer]);
+  }, [provider, address]);
 
   return balance;
 };

@@ -1,18 +1,17 @@
 "use client";
-import { DeterministicDeployer, HttpRpcClient } from "@account-abstraction/sdk";
+import { useState } from "react";
+import { HttpRpcClient } from "@account-abstraction/sdk";
 import { ethers } from "ethers";
 
-import { PasskeyAccountAPI } from "@/account/PasskeyAccountAPI";
-import {
-  Secp256r1VerifierAddress,
-  bundlerUrl,
-  chainId,
-  entryPointAddress,
-  passkeyAccountFactoryAddress,
-} from "@/constants";
+import { bundlerUrl, chainId, entryPointAddress } from "@/constants";
 import { useStore } from "@/store";
 import parseExpectedGas from "@/utils/parseExpectedGas";
-import { PasskeyAccountFactory__factory } from "@/utils/typechain-types/factories/PasskeyAccountFactory__factory";
+import {
+  authResponseToSigVerificationInput,
+  getAuthenticatorAssertionResponse,
+} from "@/utils/webauthn";
+import useAccount from "@/hooks/useAccount";
+import LoadingSpinner from "./LoadingSpinner";
 
 type Context = {
   signature: Array<string>;
@@ -21,139 +20,116 @@ type Context = {
 };
 
 const Send = () => {
-  const { provider, signer, publicKey, signature, publicKeyCredential } =
-    useStore();
+  const { provider } = useStore();
+  const [recipient, setRecipient] = useState("");
+  const [amount, setAmount] = useState("");
+  const [sendingUserOperation, setSendingUserOperation] = useState(false);
 
-  async function isDeployed(addr: string): Promise<boolean> {
-    return await provider.getCode(addr).then((code) => code !== "0x");
-  }
+  const account = useAccount();
 
+  // const recipient = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"; // HH account 1
   const sendUserOperation = async () => {
-    const recipient = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"; // HH account 1
-
-    const isFactoryDeployed = await isDeployed(passkeyAccountFactoryAddress);
-    if (!isFactoryDeployed) {
-      const detDeployer = new DeterministicDeployer(provider);
-      await detDeployer.deterministicDeploy(
-        new PasskeyAccountFactory__factory(),
-        0,
-        [entryPointAddress]
-      );
-    }
-
-    const q_values = {
-      q0: publicKey[0],
-      q1: publicKey[1],
-    };
-
-    const passkeyAccountAPI = new PasskeyAccountAPI({
-      provider,
-      entryPointAddress,
-      factoryAddress: passkeyAccountFactoryAddress,
-      owner: signer,
-      ec: Secp256r1VerifierAddress,
-      q: q_values,
-    });
-
-    if (await passkeyAccountAPI.checkAccountPhantom()) {
-      const counterFactualAddress =
-        await passkeyAccountAPI.getCounterFactualAddress();
-
-      const fundAccount = await signer.sendTransaction({
-        to: counterFactualAddress,
-        value: ethers.utils.parseEther("100"),
-      });
-      await fundAccount.wait();
-    }
-
-    const passkeyAccountAddress = await passkeyAccountAPI.getAccountAddress();
-    const amountToTransfer = ethers.utils.parseEther("1");
-    const balance = await provider.getBalance(passkeyAccountAddress);
-    const recipientBalanceBefore = await provider.getBalance(recipient);
-
-    const bundlerProvider = new HttpRpcClient(
-      bundlerUrl,
-      entryPointAddress,
-      chainId
-    );
-
-    const clientDataJSON = Buffer.from(
-      publicKeyCredential.response.clientDataJSON
-    );
-    const authDataBuffer = Buffer.from(
-      publicKeyCredential.response.authenticatorData
-    );
-
-    const context: Context = {
-      signature,
-      clientDataJSON: "0x" + clientDataJSON.toString("hex"),
-      authDataBuffer: "0x" + authDataBuffer.toString("hex"),
-    };
-
-    const unsignedUserOperation = await passkeyAccountAPI.createUnsignedUserOp({
-      target: recipient,
-      data: "0x",
-      value: amountToTransfer,
-    });
-
-    const signedUserOperation = await passkeyAccountAPI.signUserOpWithContext(
-      unsignedUserOperation,
-      context
-    );
-
     try {
-      const userOpHash = await bundlerProvider.sendUserOpToBundler(
-        signedUserOperation
+      setSendingUserOperation(true);
+      const authenticatorAssertionResponse =
+        await getAuthenticatorAssertionResponse();
+
+      const sigVerificationInput = authResponseToSigVerificationInput(
+        authenticatorAssertionResponse
       );
 
-      await passkeyAccountAPI.getUserOpReceipt(userOpHash);
-    } catch (e: any) {
-      throw parseExpectedGas(e);
+      if (!account) {
+        console.log("Account not initialized");
+        setSendingUserOperation(false);
+        return;
+      }
+
+      const amountToTransfer = ethers.utils.parseEther(amount);
+      const bundlerProvider = new HttpRpcClient(
+        bundlerUrl,
+        entryPointAddress,
+        chainId
+      );
+
+      const clientDataJSON = Buffer.from(
+        authenticatorAssertionResponse.clientDataJSON
+      );
+      const authDataBuffer = Buffer.from(
+        authenticatorAssertionResponse.authenticatorData
+      );
+
+      const context: Context = {
+        signature: sigVerificationInput.signature,
+        clientDataJSON: "0x" + clientDataJSON.toString("hex"),
+        authDataBuffer: "0x" + authDataBuffer.toString("hex"),
+      };
+
+      const unsignedUserOperation = await account.createUnsignedUserOp({
+        target: recipient,
+        data: "0x",
+        value: amountToTransfer,
+      });
+
+      const signedUserOperation = await account.signUserOpWithContext(
+        unsignedUserOperation,
+        context
+      );
+
+      const recipientBalanceBefore = await provider.getBalance(recipient);
+      try {
+        const userOpHash = await bundlerProvider.sendUserOpToBundler(
+          signedUserOperation
+        );
+
+        await account.getUserOpReceipt(userOpHash);
+      } catch (e: any) {
+        setSendingUserOperation(false);
+        throw parseExpectedGas(e);
+      }
+
+      const recipientBalanceAfter = await provider.getBalance(recipient);
+      console.log(
+        "Recipient balance before:",
+        ethers.utils.formatEther(recipientBalanceBefore)
+      );
+      console.log(
+        "Recipient balance after:",
+        ethers.utils.formatEther(recipientBalanceAfter)
+      );
+    } catch (error) {
+      console.log("An error occurred while sending the user operation", error);
+      setSendingUserOperation(false);
     }
-
-    const newBalance = await provider.getBalance(passkeyAccountAddress);
-
-    console.log(
-      "Smart Account balance before:",
-      ethers.utils.formatEther(balance)
-    );
-    console.log(
-      "Smart Account balance after:",
-      ethers.utils.formatEther(newBalance)
-    );
-
-    console.log(
-      "Recipient balance before:",
-      ethers.utils.formatEther(recipientBalanceBefore)
-    );
-    const recipientBalance = await provider.getBalance(recipient);
-    console.log(
-      "Recipient balance after:",
-      ethers.utils.formatEther(recipientBalance)
-    );
   };
 
   return (
-    <div className="flex flex-col space-y-4">
-      <p>Create your wallet and send a user operation using SECP256R1</p>
-      {/* <input
+    <div className="flex flex-col space-y-4 items-stretch justify-between my-4 p-4 backdrop-blur-md bg-white/10 rounded-xl">
+      <p>Send ETH using passkeys</p>
+      <input
         type="text"
         placeholder="recipient"
         className="py-2 px-4 rounded text-gray-700"
+        onChange={(e) => setRecipient(e.target.value)}
       />
-      <input
-        type="text"
-        placeholder="amount"
-        className="py-2 px-4 rounded text-gray-700"
-      /> */}
+      <div className="relative">
+        <input
+          type="number"
+          placeholder="amount"
+          className="py-2 px-4 rounded text-gray-700 pr-12 w-full"
+          onChange={(e) => setAmount(e.target.value)}
+        />
+        <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400">
+          ETH
+        </span>
+      </div>
       <button
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        className="bg-emerald-400 hover:bg-emerald-500 text-white font-bold flex items-center justify-center h-10 rounded"
         type="button"
         onClick={sendUserOperation}
       >
-        Create & Send
+        {sendingUserOperation && <LoadingSpinner size={20} />}
+        {!sendingUserOperation && <span>Send</span>}
       </button>
-      <br />
     </div>
   );
 };

@@ -1,14 +1,10 @@
-import CreatePasskey from "@/components/CreatePasskey";
-import AuthenticatePasskey from "@/components/AuthenticatePasskey";
+import Wallet from "@/components/Wallet";
 
 export default function Home() {
   return (
-    <main className="p-12">
+    <main className="p-12 flex items-center justify-center flex-col">
       <h1 className="text-xl">Passkey Wallet</h1>
-      <div className="w-1/3">
-        <CreatePasskey />
-        <AuthenticatePasskey />
-      </div>
+      <Wallet />
     </main>
   );
 }
