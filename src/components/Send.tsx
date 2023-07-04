@@ -96,6 +96,7 @@ const Send = () => {
         "Recipient balance after:",
         ethers.utils.formatEther(recipientBalanceAfter)
       );
+      setSendingUserOperation(false);
     } catch (error) {
       console.log("An error occurred while sending the user operation", error);
       setSendingUserOperation(false);

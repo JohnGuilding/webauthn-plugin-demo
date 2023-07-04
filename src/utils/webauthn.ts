@@ -145,17 +145,17 @@ function shouldRemoveLeadingZero(bytes: Uint8Array): boolean {
 
 // const validationResult = await verifySignature(sigVerificationInput);
 // console.log("ValidationResult", validationResult);
-const verifySignature = async (sigVerificationInput: {
+export const verifySignature = async (sigVerificationInput: {
   messageHash: string;
   signature: string[];
 }) => {
-  const publicKeyBase64 = localStorage.getItem("public_key");
-  if (!publicKeyBase64) {
-    console.log("Cannot retrieve publicKeyBase64 from the local storage");
+  const publicKey = localStorage.getItem("publicKey");
+  if (!publicKey) {
     return;
   }
 
-  const publicKey: string[] = JSON.parse(publicKeyBase64);
+  const parsedPublicKey: Array<string> = JSON.parse(publicKey);
+  console.log("parsedPublicKey:", parsedPublicKey);
   const signer = new Wallet(
     "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
     new ethers.providers.JsonRpcProvider("http://localhost:8545")
@@ -170,13 +170,13 @@ const verifySignature = async (sigVerificationInput: {
   console.log("VERIFY", {
     messageHash: sigVerificationInput.messageHash,
     signature: sigVerificationInput.signature,
-    publicKey: publicKey,
+    publicKey: parsedPublicKey,
   });
 
   const sig1 = BigInt(sigVerificationInput.signature[0]);
   const sig2 = BigInt(sigVerificationInput.signature[1]);
-  const publicKey1 = BigInt(publicKey[0]);
-  const publicKey2 = BigInt(publicKey[1]);
+  const publicKey1 = BigInt(parsedPublicKey[0]);
+  const publicKey2 = BigInt(parsedPublicKey[1]);
 
   console.log(sig1.toString(10));
   console.log(sig2.toString(10));
@@ -186,7 +186,7 @@ const verifySignature = async (sigVerificationInput: {
   const tx = await ellipticCurve.validateSignature(
     sigVerificationInput.messageHash,
     sigVerificationInput.signature,
-    publicKey
+    parsedPublicKey
   );
   return tx;
 };
