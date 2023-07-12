@@ -32,7 +32,24 @@ const CreateAccount = ({ setAccountCreated }: CreateAccountProps) => {
   };
 
   const createPasskey = async () => {
+    // Registration flow:
+    // TODO: 1. go to SERVER and generate registration options
+    // TODO: 2. await navigator.credentials.create via the CLIENT and return PublicKeyCredential response
+    // TODO: 3. verify registration on the SERVER
+
+    // Authentication flow:
+    // TODO: 4. generate authentication options on the SERVER
+    // TODO: 5. authenticate the user via the CLIENT (navigator.credentials.get)
+    // TODO: 6. verify authentication on the SERVER
+
+    // Questions:
+    // 1. do I need to generate the registration options on the server (smart contracts in our case)?
+    // 2. do I need to verify the registration on the server (smart contracts in our case)?
+    // 3. do I need to generate authentication options on the server (smart contracts in our case)?
+
     const credential = await createCredential();
+    console.log("created");
+
     if (!credential) {
       console.log("Credential creation failed");
       return;
@@ -74,7 +91,7 @@ const CreateAccount = ({ setAccountCreated }: CreateAccountProps) => {
           type="button"
           disabled
         >
-          Create Passkey
+          Create Account
         </button>
       )}
     </div>

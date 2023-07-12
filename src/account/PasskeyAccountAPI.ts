@@ -8,6 +8,7 @@ import { PasskeyAccountFactory } from "@/utils/typechain-types/PasskeyAccountFac
 import { PasskeyAccountFactory__factory } from "@/utils/typechain-types/factories/PasskeyAccountFactory__factory";
 import { PasskeyAccount__factory } from "@/utils/typechain-types/factories/PasskeyAccount__factory";
 import { UserOperationStruct } from "@account-abstraction/contracts";
+import { Context } from "@/components/Send";
 
 /**
  * constructor params, added no top of base params:
@@ -21,6 +22,7 @@ export interface PasskeyAccountApiParams extends BaseApiParams {
   index?: BigNumberish;
   ec: string;
   q: QValues;
+  // webAuthnRelayingParty: string;
 }
 
 export type QValues = {
@@ -41,6 +43,7 @@ export class PasskeyAccountAPI extends BaseAccountAPI {
   index: BigNumberish;
   ec: string;
   q: QValues;
+  // webAuthnRelayingParty: string;
 
   /**
    * our account contract.
@@ -57,6 +60,7 @@ export class PasskeyAccountAPI extends BaseAccountAPI {
     this.index = BigNumber.from(params.index ?? 0);
     this.ec = params.ec;
     this.q = params.q;
+    // this.webAuthnRelayingParty = params.webAuthnRelayingParty;
   }
 
   async _getAccountContract(): Promise<PasskeyAccount> {
@@ -128,7 +132,7 @@ export class PasskeyAccountAPI extends BaseAccountAPI {
 
   async signUserOpWithContext(
     userOp: UserOperationStruct,
-    context: any
+    context: Context
   ): Promise<UserOperationStruct> {
     await userOp.verificationGasLimit;
     return {
@@ -137,11 +141,15 @@ export class PasskeyAccountAPI extends BaseAccountAPI {
       preVerificationGas: 486880,
       // preVerificationGas: await this.getPreVerificationGas(userOp),
       signature: ethers.utils.defaultAbiCoder.encode(
-        ["bytes", "bytes", "bytes"],
+        ["bytes", "bytes", "bytes", "bytes32", "string", "address", "bytes"],
         [
           ethers.utils.hexConcat(context.signature),
           context.clientDataJSON,
           context.authDataBuffer,
+          context.challenge,
+          context.clientDataType,
+          context.origin,
+          context.credentialId,
         ]
       ),
     };

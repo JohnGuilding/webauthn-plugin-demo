@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { ECDSASigValue } from "@peculiar/asn1-ecc";
 import { AsnParser } from "@peculiar/asn1-schema";
 import base64ToArrayBuffer from "./base64ToArrayBuffer";
-import { Secp256r1VerifierAddress } from "@/constants";
+import { secp256r1VerifierAddress } from "@/constants";
 import EllipticCurve from "@/utils/ABIs/EllipticCurve.json";
 import { Wallet, ethers } from "ethers";
 
@@ -50,12 +50,23 @@ export const createCredential =
     })) as PublicKeyCredential;
   };
 
+export function hexStringToBuffer(hexString: string) {
+  const bytes = new Uint8Array(Math.ceil(hexString.length / 2));
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(hexString.substr(i * 2, 2), 16);
+  }
+  return bytes.buffer;
+}
+
 export const getCredential = async (
   credentialId: BufferSource
 ): Promise<Credential | null> => {
-  const challengeUuid = uuidv4();
-  const textEncoder = new TextEncoder();
-  const challenge = textEncoder.encode(challengeUuid).buffer;
+  // const challengeUuid = uuidv4();
+  const hexChallenge =
+    "0xe17103a9c84185b1fa2a812bedb82c3e39b3a91c0b3f7238459ed097eb933ce3";
+  // const textEncoder = new TextEncoder();
+  const challenge = hexStringToBuffer(hexChallenge.slice(2));
+  // const challenge = textEncoder.encode(challengeUuid).buffer;
 
   const publicKeyCredentialRequestOptions: PublicKeyCredentialRequestOptions = {
     challenge,
@@ -68,9 +79,21 @@ export const getCredential = async (
     timeout: 60000,
   };
 
-  return navigator.credentials.get({
-    publicKey: publicKeyCredentialRequestOptions,
-  });
+  // Wait for the user to complete assertion
+  let credential;
+  try {
+    credential = (await navigator.credentials.get({
+      publicKey: publicKeyCredentialRequestOptions,
+    })) as Credential;
+  } catch (err) {
+    throw new Error("An unexpected error occured getting the credential");
+  }
+
+  if (!credential) {
+    throw new Error("Authentication was not completed");
+  }
+
+  return credential;
 };
 
 export const getAuthenticatorAssertionResponse =
@@ -162,7 +185,7 @@ export const verifySignature = async (sigVerificationInput: {
   );
 
   const ellipticCurve = new ethers.Contract(
-    Secp256r1VerifierAddress,
+    secp256r1VerifierAddress,
     EllipticCurve.abi,
     signer
   );

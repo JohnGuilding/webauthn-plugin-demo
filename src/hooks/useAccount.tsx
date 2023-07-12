@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { PasskeyAccountAPI } from "@/account/PasskeyAccountAPI";
 import {
-  Secp256r1VerifierAddress,
+  secp256r1VerifierAddress,
   entryPointAddress,
   passkeyAccountFactoryAddress,
+  webAuthnRelayingParty,
 } from "@/constants";
 import { useStore } from "@/store";
 
@@ -28,8 +29,9 @@ const useAccount = () => {
       entryPointAddress,
       factoryAddress: passkeyAccountFactoryAddress,
       owner: signer,
-      ec: Secp256r1VerifierAddress,
+      ec: secp256r1VerifierAddress,
       q,
+      // webAuthnRelayingParty,
     });
 
     setAccount(passkeyAccountAPI);

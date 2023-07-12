@@ -1,7 +1,9 @@
 export const chainId = 31337;
-export const entryPointAddress = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789";
+export const entryPointAddress = "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789";
 export const passkeyAccountFactoryAddress =
-  "0xC82FA14aF72C9fA8F9b7F6408DdF02Ed90a3631c";
+  "0x820aad1bb08e8d3fe7a824c96b1e2d1d4cf7f4a8";
 export const bundlerUrl = "http://localhost:3000/rpc";
-export const Secp256r1VerifierAddress =
-  "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
+export const secp256r1VerifierAddress =
+  "0xcad35e1f56ec02ce76c08c92d39e3dcfab89e30c";
+export const webAuthnRelayingParty =
+  "0xb28dd78754e7d60b5bc2f3dc705a6c41563b2cd0";
