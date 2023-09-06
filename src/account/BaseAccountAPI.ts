@@ -237,7 +237,9 @@ export abstract class BaseAccountAPI {
       if (this.accountAddress != null) {
         this.senderAddress = this.accountAddress;
       } else {
-        this.senderAddress = await this.getCounterFactualAddress();
+        // FIXME: getCounterFactualAddress returns wrong address
+        throw new Error("No account address");
+        // this.senderAddress = await this.getCounterFactualAddress();
       }
     }
     return this.senderAddress;

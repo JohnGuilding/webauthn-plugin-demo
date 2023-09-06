@@ -1,29 +1,35 @@
 "use client";
 
-import { useStore } from "@/store";
-import { ethers } from "ethers";
-import LoadingSpinner from "./LoadingSpinner";
 import { useState } from "react";
+import { ethers } from "ethers";
+import { useStore } from "@/store";
+import LoadingSpinner from "./LoadingSpinner";
+import useAccount from "@/hooks/useAccount";
 
-interface FaucetProps {
-  address: string;
-}
-
-const Faucet = ({ address }: FaucetProps) => {
+const Faucet = () => {
   const { signer } = useStore();
+  const account = useAccount();
   const [requestingFunds, setRequestingFunds] = useState(false);
 
   const fundAccount = async () => {
     setRequestingFunds(true);
-    if (address === "") {
+    if (!account) {
       return;
     }
 
-    const fundAccount = await signer.sendTransaction({
-      to: address,
-      value: ethers.utils.parseEther("100"),
-    });
-    await fundAccount.wait();
+    try {
+      const proxyAddress = await account.getProxyAddress();
+
+      const fundAccount = await signer.sendTransaction({
+        to: proxyAddress,
+        value: ethers.utils.parseEther("100"),
+      });
+      await fundAccount.wait();
+    } catch (error) {
+      setRequestingFunds(false);
+      throw error;
+    }
+
     setRequestingFunds(false);
   };
 

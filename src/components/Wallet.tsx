@@ -5,21 +5,39 @@ import AccountDetails from "./AccountDetails";
 import CreateAccount from "./CreateAccount";
 import Send from "./Send";
 import LoadingSpinner from "./LoadingSpinner";
+import { useStore } from "@/store";
 
 const Wallet = () => {
+  const { provider } = useStore();
   const [loading, setLoading] = useState(true);
   const [accountCreated, setAccountCreated] = useState(false);
 
   useEffect(() => {
-    const credentialId = localStorage.getItem("credentialId");
-    const publicKey = localStorage.getItem("publicKey");
-    if (credentialId && publicKey) {
-      setAccountCreated(true);
-      setLoading(false);
+    async function getAccountCode(safeWebAuthnPluginAddress: string) {
+      const accountCode = await provider.getCode(safeWebAuthnPluginAddress);
+
+      if (accountCode == "0x") {
+        setAccountCreated(false);
+        setLoading(false);
+      } else {
+        setLoading(false);
+        setAccountCreated(true);
+      }
     }
 
-    setLoading(false);
-  }, []);
+    const safeWebAuthnPluginAddress = localStorage.getItem(
+      "safeWebAuthnPluginAddress"
+    );
+    const credentialId = localStorage.getItem("credentialId");
+    const publicKey = localStorage.getItem("publicKey");
+
+    if (credentialId && publicKey && safeWebAuthnPluginAddress) {
+      getAccountCode(safeWebAuthnPluginAddress);
+    } else {
+      setLoading(false);
+      setAccountCreated(false);
+    }
+  }, [provider]);
 
   return (
     <div className="w-96 lg:w-[40rem]">

@@ -1,40 +1,45 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Address from "./Address";
-import useAccount from "@/hooks/useAccount";
-import Balance from "./Balance";
-import useBalance from "@/hooks/useBalance";
 import { ethers } from "ethers";
+import useBalance from "@/hooks/useBalance";
+import useAccount from "@/hooks/useAccount";
+import Address from "./Address";
+import Balance from "./Balance";
 import Faucet from "./Faucet";
 
 const AccountDetails = () => {
-  const [address, setAddress] = useState("");
+  const [pluginAddress, setPluginAddress] = useState("");
+  const [proxyAddress, setProxyAddress] = useState("");
 
   const account = useAccount();
 
   useEffect(() => {
     const getAccount = async () => {
-      if (!account) {
+      if (!account || !account.accountAddress) {
         return;
       }
 
-      const passkeyAccountAddress = await account.getCounterFactualAddress();
-      setAddress(passkeyAccountAddress);
+      // FIXME: getCounterFactualAddress returns wrong address
+      // const pluginAddress = await account.getCounterFactualAddress();
+      const pluginAddress = account.accountAddress;
+      const proxyAddress = await account.getProxyAddress();
+
+      setPluginAddress(pluginAddress);
+      setProxyAddress(proxyAddress);
     };
 
     getAccount();
   }, [account]);
 
-  const balance = useBalance(address);
+  const balance = useBalance(proxyAddress);
 
   return (
     <div className="flex flex-col space-y-2 my-4 p-4 backdrop-blur-md bg-white/10 rounded-xl">
-      <Address address={address} />
-      <Balance address={address} />
-      {balance && ethers.utils.parseEther(balance).isZero() && (
-        <Faucet address={address} />
-      )}
+      <Address address={proxyAddress} name="Safe Proxy" />
+      <Address address={pluginAddress} name="Safe Plugin" />
+      <Balance address={proxyAddress} name="Safe Proxy" />
+      {balance && ethers.utils.parseEther(balance).isZero() && <Faucet />}
     </div>
   );
 };

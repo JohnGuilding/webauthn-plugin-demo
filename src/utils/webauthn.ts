@@ -3,9 +3,6 @@ import { v4 as uuidv4 } from "uuid";
 import { ECDSASigValue } from "@peculiar/asn1-ecc";
 import { AsnParser } from "@peculiar/asn1-schema";
 import base64ToArrayBuffer from "./base64ToArrayBuffer";
-import { secp256r1VerifierAddress } from "@/constants";
-import EllipticCurve from "@/utils/ABIs/EllipticCurve.json";
-import { Wallet, ethers } from "ethers";
 
 export const createCredential =
   async (): Promise<PublicKeyCredential | null> => {
@@ -45,9 +42,18 @@ export const createCredential =
       };
 
     // Should get called on the client
-    return (await navigator.credentials.create({
-      publicKey: publicKeyCredentialCreationOptions,
-    })) as PublicKeyCredential;
+    let result: PublicKeyCredential;
+    try {
+      result = (await navigator.credentials.create({
+        publicKey: publicKeyCredentialCreationOptions,
+      })) as PublicKeyCredential;
+    } catch (error) {
+      throw new Error(
+        `An unexptected error occired trying to create the public key credential: ${error}`
+      );
+    }
+
+    return result;
   };
 
 export function hexStringToBuffer(hexString: string) {
@@ -165,51 +171,3 @@ export function toHash(data: any, algo = "SHA256") {
 function shouldRemoveLeadingZero(bytes: Uint8Array): boolean {
   return bytes[0] === 0x0 && (bytes[1] & (1 << 7)) !== 0;
 }
-
-// const validationResult = await verifySignature(sigVerificationInput);
-// console.log("ValidationResult", validationResult);
-export const verifySignature = async (sigVerificationInput: {
-  messageHash: string;
-  signature: string[];
-}) => {
-  const publicKey = localStorage.getItem("publicKey");
-  if (!publicKey) {
-    return;
-  }
-
-  const parsedPublicKey: Array<string> = JSON.parse(publicKey);
-  console.log("parsedPublicKey:", parsedPublicKey);
-  const signer = new Wallet(
-    "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
-    new ethers.providers.JsonRpcProvider("http://localhost:8545")
-  );
-
-  const ellipticCurve = new ethers.Contract(
-    secp256r1VerifierAddress,
-    EllipticCurve.abi,
-    signer
-  );
-
-  console.log("VERIFY", {
-    messageHash: sigVerificationInput.messageHash,
-    signature: sigVerificationInput.signature,
-    publicKey: parsedPublicKey,
-  });
-
-  const sig1 = BigInt(sigVerificationInput.signature[0]);
-  const sig2 = BigInt(sigVerificationInput.signature[1]);
-  const publicKey1 = BigInt(parsedPublicKey[0]);
-  const publicKey2 = BigInt(parsedPublicKey[1]);
-
-  console.log(sig1.toString(10));
-  console.log(sig2.toString(10));
-  console.log(publicKey1.toString(10));
-  console.log(publicKey2.toString(10));
-
-  const tx = await ellipticCurve.validateSignature(
-    sigVerificationInput.messageHash,
-    sigVerificationInput.signature,
-    parsedPublicKey
-  );
-  return tx;
-};

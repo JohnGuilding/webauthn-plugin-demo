@@ -2,8 +2,8 @@
 import { useState } from "react";
 import { HttpRpcClient } from "@account-abstraction/sdk";
 import { ethers } from "ethers";
-import { v4 as uuidv4 } from "uuid";
 import base64 from "@hexagon/base64";
+import base64url from "base64url";
 
 import { bundlerUrl, chainId, entryPointAddress } from "@/constants";
 import { useStore } from "@/store";
@@ -16,8 +16,7 @@ import useAccount from "@/hooks/useAccount";
 import LoadingSpinner from "./LoadingSpinner";
 import base64ToArrayBuffer from "@/utils/base64ToArrayBuffer";
 import { bufferToBase64URLString } from "@/utils/bufferToBase64URLString";
-import { parseAuthenticatorData } from "@/utils/parseAuthenticatorData";
-import base64url from "base64url";
+import createUserOp from "@/utils/createUserOp";
 
 export type Context = {
   signature: Array<string>;
@@ -73,21 +72,15 @@ export type ClientDataJSON = {
   };
 };
 
-function arrayBufferToHex(buffer: ArrayBuffer): string {
-  return Array.prototype.map
-    .call(new Uint8Array(buffer), (x) => ("00" + x.toString(16)).slice(-2))
-    .join("");
-}
-
 const Send = () => {
-  const { provider } = useStore();
+  const { provider, signer } = useStore();
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
   const [sendingUserOperation, setSendingUserOperation] = useState(false);
 
   const account = useAccount();
 
-  // const recipient = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"; // HH account 1
+  // const recipient = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"; // Hardhat account #2
   const sendUserOperation = async () => {
     try {
       setSendingUserOperation(true);
@@ -97,16 +90,8 @@ const Send = () => {
       const clientDataJSONStr = bufferToBase64URLString(
         authenticatorAssertionResponse.clientDataJSON
       );
-      const authenticatorDataStr = bufferToBase64URLString(
-        authenticatorAssertionResponse.authenticatorData
-      );
-      const parsedAuthenticatorData = parseAuthenticatorData(
-        toBuffer(authenticatorDataStr)
-      );
-      console.log("authenticatorAssertionResponse", parsedAuthenticatorData);
 
       const clientDataJSONTest = decodeClientDataJSON(clientDataJSONStr);
-      console.log("clientDataJSON", clientDataJSONTest);
 
       const sigVerificationInput = authResponseToSigVerificationInput(
         authenticatorAssertionResponse
@@ -160,8 +145,6 @@ const Send = () => {
           .map((b) => ("0" + b.toString(16)).slice(-2))
           .join("");
 
-      console.log("challengeHex", challengeHex);
-
       const context: Context = {
         signature: sigVerificationInput.signature,
         clientDataJSON: "0x" + clientDataJSON.toString("hex"),
@@ -173,22 +156,28 @@ const Send = () => {
           "0x" + Buffer.from(credentialIdArrayBuffer).toString("hex"),
       };
 
-      const unsignedUserOperation = await account.createUnsignedUserOp({
-        target: recipient,
-        data: "0x",
-        value: amountToTransfer,
-      });
+      // const unsignedUserOperation = await account.createUnsignedUserOp({
+      //   target: recipient,
+      //   data: "0x",
+      //   value: amountToTransfer,
+      // });
 
-      const signedUserOperation = await account.signUserOpWithContext(
-        unsignedUserOperation,
-        context
+      // const signedUserOperation = await account.signUserOpWithContext(
+      //   unsignedUserOperation,
+      //   context
+      // );
+
+      const userOp = await createUserOp(
+        signer,
+        recipient,
+        amountToTransfer,
+        context,
+        account
       );
 
       const recipientBalanceBefore = await provider.getBalance(recipient);
       try {
-        const userOpHash = await bundlerProvider.sendUserOpToBundler(
-          signedUserOperation
-        );
+        const userOpHash = await bundlerProvider.sendUserOpToBundler(userOp);
 
         await account.getUserOpReceipt(userOpHash);
       } catch (e: any) {
@@ -207,8 +196,8 @@ const Send = () => {
       );
       setSendingUserOperation(false);
     } catch (error) {
-      console.log("An error occurred while sending the user operation", error);
       setSendingUserOperation(false);
+      throw error;
     }
   };
 

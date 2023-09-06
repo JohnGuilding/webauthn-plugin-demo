@@ -1,37 +1,71 @@
 import { useState, useEffect } from "react";
-import { PasskeyAccountAPI } from "@/account/PasskeyAccountAPI";
+import { ethers } from "ethers";
 import {
-  secp256r1VerifierAddress,
+  PublicKey,
+  SafeWebAuthnPluginAPI,
+} from "@/account/SafeWebAuthnPluginAPI";
+import {
   entryPointAddress,
-  passkeyAccountFactoryAddress,
-  webAuthnRelayingParty,
+  safeProxyFactoryAddress,
+  safeSingletonAddress,
 } from "@/constants";
 import { useStore } from "@/store";
+import SafeProxyFactory from "@/utils/ABIs/SafeProxyFactory.json";
+import Safe from "@/utils/ABIs/Safe.json";
+import SafeWebAuthnPluginArtifact from "@/utils/ABIs/SafeWebAuthnPlugin.json";
 
 const useAccount = () => {
   const { provider, signer } = useStore();
-  const [account, setAccount] = useState<PasskeyAccountAPI>();
+  const [account, setAccount] = useState<SafeWebAuthnPluginAPI>();
 
   useEffect(() => {
-    const publicKey = localStorage.getItem("publicKey");
-    if (!publicKey) {
+    const publicKeyString = localStorage.getItem("publicKey");
+    if (!publicKeyString) {
       return;
     }
 
-    const parsedPublicKey = JSON.parse(publicKey);
-    const q = {
-      q0: parsedPublicKey[0],
-      q1: parsedPublicKey[1],
-    };
+    const safeWebAuthnPluginAddress = localStorage.getItem(
+      "safeWebAuthnPluginAddress"
+    );
+    if (!safeWebAuthnPluginAddress) {
+      return;
+    }
 
-    const passkeyAccountAPI = new PasskeyAccountAPI({
+    const parsedPublicKey = JSON.parse(publicKeyString);
+    const publicKey: PublicKey = [parsedPublicKey[0], parsedPublicKey[1]];
+
+    const safeProxyFactory = new ethers.ContractFactory(
+      SafeProxyFactory.abi,
+      SafeProxyFactory.bytecode,
+      signer
+    )
+      .attach(safeProxyFactoryAddress)
+      .connect(signer);
+
+    const safeFactory = new ethers.ContractFactory(
+      Safe.abi,
+      Safe.bytecode,
+      signer
+    )
+      .attach(safeSingletonAddress)
+      .connect(signer);
+
+    const safeWebAuthnPluginFactory = new ethers.ContractFactory(
+      SafeWebAuthnPluginArtifact.abi,
+      SafeWebAuthnPluginArtifact.bytecode,
+      signer
+    );
+
+    const passkeyAccountAPI = new SafeWebAuthnPluginAPI({
       provider,
       entryPointAddress,
-      factoryAddress: passkeyAccountFactoryAddress,
+      safeProxyFactoryAddress,
+      accountAddress: safeWebAuthnPluginAddress,
       owner: signer,
-      ec: secp256r1VerifierAddress,
-      q,
-      // webAuthnRelayingParty,
+      publicKey,
+      safeProxyFactory,
+      safeFactory,
+      safeWebAuthnPluginFactory,
     });
 
     setAccount(passkeyAccountAPI);

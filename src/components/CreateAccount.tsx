@@ -1,14 +1,19 @@
 "use client";
 import { useEffect, useState } from "react";
+import { ethers } from "ethers";
 
 import { createCredential } from "@/utils/webauthn";
 import { getPublicKey } from "@/utils/getPublicKey";
+import { entryPointAddress } from "@/constants";
+import SafeWebAuthnPluginArtifact from "@/utils/ABIs/SafeWebAuthnPlugin.json";
+import { useStore } from "@/store";
 
 interface CreateAccountProps {
   setAccountCreated: (accountCreated: boolean) => void;
 }
 
 const CreateAccount = ({ setAccountCreated }: CreateAccountProps) => {
+  const { signer } = useStore();
   const [isComptabible, setIsComptabible] = useState(false);
 
   useEffect(() => {
@@ -48,7 +53,6 @@ const CreateAccount = ({ setAccountCreated }: CreateAccountProps) => {
     // 3. do I need to generate authentication options on the server (smart contracts in our case)?
 
     const credential = await createCredential();
-    console.log("created");
 
     if (!credential) {
       console.log("Credential creation failed");
@@ -67,10 +71,25 @@ const CreateAccount = ({ setAccountCreated }: CreateAccountProps) => {
       return;
     }
 
+    const safeWebAuthnPluginFactory = new ethers.ContractFactory(
+      SafeWebAuthnPluginArtifact.abi,
+      SafeWebAuthnPluginArtifact.bytecode,
+      signer
+    );
+
+    const safeWebAuthnPlugin = await safeWebAuthnPluginFactory.deploy(
+      entryPointAddress,
+      pubKey
+    );
+    const safeWebAuthnPluginAddress = safeWebAuthnPlugin.address;
+
     // public key and randomly generated credential ID is sent to the server for storage
+    localStorage.setItem(
+      "safeWebAuthnPluginAddress",
+      safeWebAuthnPluginAddress
+    );
     localStorage.setItem("credentialId", credential.id);
     localStorage.setItem("publicKey", JSON.stringify(pubKey));
-    console.log("Created");
     setAccountCreated(true);
   };
 
