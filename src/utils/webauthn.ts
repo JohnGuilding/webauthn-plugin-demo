@@ -56,7 +56,7 @@ export const createCredential =
     return result;
   };
 
-export function hexStringToBuffer(hexString: string) {
+function hexStringToBuffer(hexString: string) {
   const bytes = new Uint8Array(Math.ceil(hexString.length / 2));
   for (let i = 0; i < bytes.length; i++) {
     bytes[i] = parseInt(hexString.substr(i * 2, 2), 16);
@@ -143,7 +143,7 @@ const getMessageHash = (authResponse: AuthenticatorAssertionResponse) => {
   return "0x" + toHash(signatureBase).toString("hex");
 };
 
-export const getSignature = (signatureBuffer: ArrayBuffer) => {
+const getSignature = (signatureBuffer: ArrayBuffer) => {
   const parsedSignature = AsnParser.parse(signatureBuffer, ECDSASigValue);
 
   let rBytes = new Uint8Array(parsedSignature.r);
@@ -164,7 +164,7 @@ export const getSignature = (signatureBuffer: ArrayBuffer) => {
   return signature;
 };
 
-export function toHash(data: any, algo = "SHA256") {
+function toHash(data: any, algo = "SHA256") {
   return crypto.createHash(algo).update(data).digest();
 }
 

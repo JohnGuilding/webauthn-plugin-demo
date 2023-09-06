@@ -2,26 +2,19 @@ import { ethers, Wallet, BigNumber } from "ethers";
 import { UserOperationStruct } from "@account-abstraction/contracts";
 import SafeWebAuthnPluginArtifact from "@/utils/ABIs/SafeWebAuthnPlugin.json";
 import EntryPoint from "@/utils/ABIs/EntryPoint.json";
-import { Context } from "@/components/Send";
+import { WebAuthnParams } from "@/components/Send";
 import { SafeWebAuthnPluginAPI } from "@/account/SafeWebAuthnPluginAPI";
-
-const BUNDLER_URL = "http://localhost:3000/rpc";
-const NODE_URL = "http://localhost:8545";
+import { bundlerUrl, entryPointAddress, nodeUrl } from "@/constants";
 
 export default async function createUserOp(
   signer: Wallet,
   recipient: string,
   amountToTransfer: BigNumber,
-  context: Context,
+  webAuthnParams: WebAuthnParams,
   account: SafeWebAuthnPluginAPI
 ) {
-  const bundlerProvider = new ethers.providers.JsonRpcProvider(BUNDLER_URL);
-  const provider = new ethers.providers.JsonRpcProvider(NODE_URL);
-
-  const entryPoints = await bundlerProvider.send(
-    "eth_supportedEntryPoints",
-    []
-  );
+  const bundlerProvider = new ethers.providers.JsonRpcProvider(bundlerUrl);
+  const provider = new ethers.providers.JsonRpcProvider(nodeUrl);
 
   const encoder = new ethers.utils.AbiCoder();
   const clientChallengeDataOffset = 36;
@@ -30,15 +23,14 @@ export default async function createUserOp(
   const userOpSignature = encoder.encode(
     ["bytes", "bytes1", "bytes", "uint256", "uint256[2]", "uint256[2]"],
     [
-      context.authDataBuffer,
+      webAuthnParams.authDataBuffer,
       authenticatorDataFlagMask,
-      context.clientDataJSON,
+      webAuthnParams.clientDataJSON,
       clientChallengeDataOffset,
-      context.signature,
+      webAuthnParams.signature,
       account.publicKey,
     ]
   );
-  const ENTRYPOINT_ADDRESS = entryPoints[0];
 
   const safeWebAuthnPlugin = new ethers.Contract(
     account.accountAddress!,
@@ -65,7 +57,7 @@ export default async function createUserOp(
   );
 
   const entryPoint = new ethers.Contract(
-    ENTRYPOINT_ADDRESS,
+    entryPointAddress,
     EntryPoint.abi,
     signer
   );
@@ -84,7 +76,7 @@ export default async function createUserOp(
 
   const gasEstimate = await bundlerProvider.send(
     "eth_estimateUserOperationGas",
-    [userOperationWithoutGasFields, ENTRYPOINT_ADDRESS]
+    [userOperationWithoutGasFields, entryPointAddress]
   );
 
   const safeVerificationGasLimit = BigNumber.from(

@@ -13,7 +13,7 @@ import SafeWebAuthnPluginArtifact from "@/utils/ABIs/SafeWebAuthnPlugin.json";
 import { BaseApiParams, BaseAccountAPI } from "./BaseAccountAPI";
 import { SafeWebAuthnPlugin } from "@/utils/typechain-types/SafeWebAuthnPlugin";
 import { UserOperationStruct } from "@account-abstraction/contracts";
-import { Context } from "@/components/Send";
+import { WebAuthnParams } from "@/components/Send";
 import { safeSingletonAddress } from "@/constants";
 import { SafeWebAuthnPlugin__factory } from "@/utils/typechain-types";
 import { calculateProxyAddress } from "@/utils/calculateProxyAddress";
@@ -167,7 +167,7 @@ export class SafeWebAuthnPluginAPI extends BaseAccountAPI {
   // TODO: update this function
   async signUserOpWithContext(
     userOp: UserOperationStruct,
-    context: Context
+    context: WebAuthnParams
   ): Promise<UserOperationStruct> {
     await userOp.verificationGasLimit;
     return {
