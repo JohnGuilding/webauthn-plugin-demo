@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 import { createCredential } from "@/utils/webauthn";
 import { getPublicKey } from "@/utils/getPublicKey";
 import { entryPointAddress } from "@/constants";
-import SafeWebAuthnPluginArtifact from "@/utils/ABIs/SafeWebAuthnPlugin.json";
+import SafeWebAuthnPluginArtifact from "@/utils/hardhat-artifacts/SafeWebAuthnPlugin.json";
 import { useStore } from "@/store";
 
 interface CreateAccountProps {

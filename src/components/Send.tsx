@@ -132,7 +132,7 @@ const Send = () => {
 
   return (
     <div className="flex flex-col space-y-4 items-stretch justify-between my-4 p-4 backdrop-blur-md bg-white/10 rounded-xl">
-      <p>Send ETH using passkeys</p>
+      <p>Send ETH</p>
       <input
         type="text"
         placeholder="recipient"

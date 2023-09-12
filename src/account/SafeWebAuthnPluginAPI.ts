@@ -9,7 +9,7 @@ import { AddressZero } from "@ethersproject/constants";
 import { arrayify, hexConcat } from "ethers/lib/utils";
 import { Signer } from "@ethersproject/abstract-signer";
 
-import SafeWebAuthnPluginArtifact from "@/utils/ABIs/SafeWebAuthnPlugin.json";
+import SafeWebAuthnPluginArtifact from "@/utils/hardhat-artifacts/SafeWebAuthnPlugin.json";
 import { BaseApiParams, BaseAccountAPI } from "./BaseAccountAPI";
 import { SafeWebAuthnPlugin } from "@/utils/typechain-types/SafeWebAuthnPlugin";
 import { UserOperationStruct } from "@account-abstraction/contracts";
@@ -175,18 +175,18 @@ export class SafeWebAuthnPluginAPI extends BaseAccountAPI {
       verificationGasLimit: Number(userOp.verificationGasLimit) * 7,
       preVerificationGas: 486880,
       // preVerificationGas: await this.getPreVerificationGas(userOp),
-      signature: ethers.utils.defaultAbiCoder.encode(
-        ["bytes", "bytes", "bytes", "bytes32", "string", "address", "bytes"],
-        [
-          ethers.utils.hexConcat(context.signature),
-          context.clientDataJSON,
-          context.authDataBuffer,
-          context.challenge,
-          context.clientDataType,
-          context.origin,
-          context.credentialId,
-        ]
-      ),
+      // signature: ethers.utils.defaultAbiCoder.encode(
+      //   ["bytes", "bytes", "bytes", "bytes32", "string", "address", "bytes"],
+      //   [
+      //     ethers.utils.hexConcat(context.signature),
+      //     context.clientDataJSON,
+      //     context.authDataBuffer,
+      //     context.challenge,
+      //     context.clientDataType,
+      //     context.origin,
+      //     context.credentialId,
+      //   ]
+      // ),
     };
   }
 

@@ -1,7 +1,7 @@
 import { ethers, Wallet, BigNumber } from "ethers";
 import { UserOperationStruct } from "@account-abstraction/contracts";
-import SafeWebAuthnPluginArtifact from "@/utils/ABIs/SafeWebAuthnPlugin.json";
-import EntryPoint from "@/utils/ABIs/EntryPoint.json";
+import SafeWebAuthnPluginArtifact from "@/utils/hardhat-artifacts/SafeWebAuthnPlugin.json";
+import EntryPoint from "@/utils/hardhat-artifacts/EntryPoint.json";
 import { WebAuthnParams } from "@/components/Send";
 import { SafeWebAuthnPluginAPI } from "@/account/SafeWebAuthnPluginAPI";
 import { bundlerUrl, entryPointAddress, nodeUrl } from "@/constants";

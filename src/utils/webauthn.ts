@@ -123,8 +123,7 @@ export const getAuthenticatorAssertionResponse =
   };
 
 /**
- * Create the inputs to verify the secp256r1/p256 signatures minus the public key
- * in the EllipticCurve.sol contract, see https://github.com/tdrerup/elliptic-curve-solidity
+ * Create the inputs to verify the secp256r1/p256 signatures
  */
 export const authResponseToSigVerificationInput = (
   authResponse: AuthenticatorAssertionResponse

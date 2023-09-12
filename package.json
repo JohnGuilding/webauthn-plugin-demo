@@ -1,5 +1,5 @@
 {
-  "name": "frontend-passkey-verification",
+  "name": "webauthn-plugin-demo",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "gen-types": "typechain --target ethers-v5 --out-dir src/utils/typechain-types 'src/utils/ABIs/*.json'",
+    "gen-types": "typechain --target ethers-v5 --out-dir src/utils/typechain-types 'src/utils/hardhat-artifacts/*.json'",
     "postinstall": "sed -i.bak '/module/d' node_modules/@ethersproject/contracts/package.json"
   },
   "dependencies": {

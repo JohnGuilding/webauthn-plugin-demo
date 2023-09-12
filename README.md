@@ -10,6 +10,11 @@ yarn
 ```
 
 ```bash
+# Generate typechain types
+yarn gen-types
+```
+
+```bash
 # Start the development server
 yarn dev
 ```

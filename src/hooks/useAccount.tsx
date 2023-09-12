@@ -10,9 +10,9 @@ import {
   safeSingletonAddress,
 } from "@/constants";
 import { useStore } from "@/store";
-import SafeProxyFactory from "@/utils/ABIs/SafeProxyFactory.json";
-import Safe from "@/utils/ABIs/Safe.json";
-import SafeWebAuthnPluginArtifact from "@/utils/ABIs/SafeWebAuthnPlugin.json";
+import SafeProxyFactory from "@/utils/hardhat-artifacts/SafeProxyFactory.json";
+import Safe from "@/utils/hardhat-artifacts/Safe.json";
+import SafeWebAuthnPluginArtifact from "@/utils/hardhat-artifacts/SafeWebAuthnPlugin.json";
 
 const useAccount = () => {
   const { provider, signer } = useStore();
@@ -56,7 +56,7 @@ const useAccount = () => {
       signer
     );
 
-    const passkeyAccountAPI = new SafeWebAuthnPluginAPI({
+    const safeWebAuthnPluginAPI = new SafeWebAuthnPluginAPI({
       provider,
       entryPointAddress,
       safeProxyFactoryAddress,
@@ -68,7 +68,7 @@ const useAccount = () => {
       safeWebAuthnPluginFactory,
     });
 
-    setAccount(passkeyAccountAPI);
+    setAccount(safeWebAuthnPluginAPI);
   }, [provider, signer]);
 
   return account;

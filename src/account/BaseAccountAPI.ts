@@ -125,10 +125,10 @@ export abstract class BaseAccountAPI {
       this.getAccountAddress()
     );
     if (senderAddressCode.length > 2) {
-      // console.log(`PasskeyAccount Contract already deployed at ${this.senderAddress}`)
+      // console.log(`SafeWebAuthnPlugin Contract already deployed at ${this.senderAddress}`)
       this.isPhantom = false;
     } else {
-      // console.log(`PasskeyAccount Contract is NOT YET deployed at ${this.senderAddress} - working in "phantom account" mode.`)
+      // console.log(`SafeWebAuthnPlugin Contract is NOT YET deployed at ${this.senderAddress} - working in "phantom account" mode.`)
     }
     return this.isPhantom;
   }
